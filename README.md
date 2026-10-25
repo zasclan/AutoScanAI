@@ -38,7 +38,8 @@ Reviewable report, local history and PDF export
 
 ## Implemented safeguards
 
-- Explicit API-key and image preconditions
+- Server-side gateway option that keeps the provider key out of distributed clients
+- Explicit gateway/API-key and image preconditions
 - 30-second timeout and one retry for rate-limit/server failures
 - Strict vehicle decision, enumerated severity/risk levels and bounded scores
 - Localized evidence items with per-finding confidence
@@ -72,13 +73,13 @@ The complete research questions, proposed dataset design, metrics, threats to va
 
 ## Configuration
 
-Copy `.env.example` to `.env` and provide the required development key:
+For distributed builds, deploy the reference Worker in `server/` and point the app at it:
 
 ```env
-EXPO_PUBLIC_GROQ_API_KEY=your_key_here
+EXPO_PUBLIC_ANALYSIS_API_URL=https://your-gateway.example
 ```
 
-Expo public environment variables are bundled into the client. A production deployment should proxy model requests through a controlled backend that authenticates users, protects provider credentials, rate-limits requests and stores audit metadata.
+Store `GROQ_API_KEY` as a server-side Worker secret. For local experiments only, `EXPO_PUBLIC_GROQ_API_KEY` remains available as a fallback; Expo public variables are embedded in the client and must not be used for production distribution. The reference gateway validates payloads, restricts CORS when configured, prevents response caching and keeps the provider credential at the server boundary. An internet-facing deployment should add user authentication and durable rate limiting.
 
 ## Known limitations
 

@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { GROQ_API_KEY } from '../config/groq';
+import { ANALYSIS_API_URL, GROQ_API_KEY } from '../config/groq';
 import { extractJsonObject, InspectionResult, normalizeInspection } from '../domain/inspection';
 
 const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
@@ -42,11 +42,15 @@ async function requestAssessment(base64Image: string, attempt: number): Promise<
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const startedAt = Date.now();
   try {
-    const response = await fetch(ENDPOINT, {
+    const usingGateway = Boolean(ANALYSIS_API_URL);
+    const response = await fetch(usingGateway ? ANALYSIS_API_URL : ENDPOINT, {
       method: 'POST',
       signal: controller.signal,
-      headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: {
+        ...(usingGateway ? {} : { Authorization: `Bearer ${GROQ_API_KEY}` }),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(usingGateway ? { imageBase64: base64Image } : {
         model: MODEL,
         messages: [{ role: 'user', content: [
           { type: 'text', text: prompt },
@@ -66,7 +70,7 @@ async function requestAssessment(base64Image: string, attempt: number): Promise<
       }
       throw new Error(message);
     }
-    const text = payload?.choices?.[0]?.message?.content;
+    const text = usingGateway ? payload?.text : payload?.choices?.[0]?.message?.content;
     if (typeof text !== 'string' || !text.trim()) throw new Error('Assessment service returned an empty response.');
     return { text, latencyMs: Date.now() - startedAt };
   } catch (error) {
@@ -78,7 +82,7 @@ async function requestAssessment(base64Image: string, attempt: number): Promise<
 }
 
 export async function analyzeVehicleImageWithGroq(imageUri: string): Promise<InspectionResult> {
-  if (!GROQ_API_KEY) throw new Error('Groq API key is not configured. See .env.example.');
+  if (!ANALYSIS_API_URL && !GROQ_API_KEY) throw new Error('Assessment gateway is not configured. See .env.example.');
   if (!imageUri) throw new Error('Select an image before starting an assessment.');
   const base64Image = await FileSystem.readAsStringAsync(imageUri, { encoding: 'base64' });
   if (!base64Image) throw new Error('The selected image could not be read.');

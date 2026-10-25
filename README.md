@@ -1,314 +1,121 @@
-# AutoScan AI 🚗🔍
+# AutoScan AI
 
-AI-Powered Mobile Vehicle Damage Assessment and Repair Solution
+Mobile vehicle-damage assessment prototype built with React Native, Expo, and TypeScript.
 
-AutoScan AI is an intelligent mobile application developed using React Native and Expo that automates vehicle damage inspection using Artificial Intelligence and Computer Vision technologies. The application enables users to capture or upload vehicle images, analyze visible damage using the Groq AI Vision API, estimate repair costs, generate professional inspection reports, and export results as PDF documents.
+AutoScan AI lets a user capture or select a vehicle image, submit it to the Groq Vision API, review a structured damage assessment, save the result locally, and export a shareable PDF report. It was developed as a BS Computer Science final-year project at the University of Agriculture Faisalabad.
 
-This project was developed as a Final Year Project (FYP) for the Department of Computer Science, University of Agriculture Faisalabad.
+> AutoScan AI provides a preliminary visual assessment. It does not replace an inspection by a qualified mechanic, body-repair specialist, or insurance assessor.
 
----
+## Core features
 
-## 📌 Project Overview
+- Camera and gallery image input
+- Vehicle information capture
+- AI-assisted identification of visible damage
+- Severity, affected-area, and condition summaries
+- Approximate repair-cost guidance
+- Local inspection history with search and filtering
+- PDF report generation and native sharing
+- Dashboard statistics for saved inspections
 
-Traditional vehicle inspections require manual assessment by automotive experts, which can be time-consuming, expensive, and inconsistent. AutoScan AI provides a faster and more accessible alternative by utilizing AI-powered image analysis to perform preliminary vehicle damage assessments directly from a smartphone.
+## Technology
 
-The application allows users to:
+| Area | Technology |
+|---|---|
+| Mobile application | React Native, Expo |
+| Language | TypeScript |
+| Navigation | Expo Router |
+| AI service | Groq Vision API |
+| Local persistence | AsyncStorage |
+| Reports | Expo Print, Expo Sharing |
 
-* Upload vehicle damage images
-* Analyze vehicle condition using AI
-* Detect visible damages
-* Estimate repair costs
-* Generate inspection reports
-* Export reports as PDF files
-* Maintain inspection history
-* View vehicle health scores
+## Application flow
 
----
+```text
+Vehicle details and image
+          |
+          v
+React Native application
+          |
+          v
+Groq Vision API
+          |
+          v
+Response validation and result processing
+          |
+          +--> Local inspection history
+          |
+          +--> PDF report and sharing
+```
 
-## ✨ Key Features
+## Run locally
 
-### 🚘 Vehicle Inspection
+### Requirements
 
-* Enter vehicle details
-* Vehicle make
-* Vehicle model
-* Manufacturing year
-* Mileage
-* City / Location
+- Node.js 20 or newer
+- npm
+- Expo Go or an Android/iOS development environment
+- A Groq API key
 
-### 📸 Image Acquisition
+### Setup
 
-* Capture image using device camera
-* Select image from gallery
-* Image validation before analysis
-
-### 🤖 AI Damage Analysis
-
-* Groq AI Vision integration
-* Damage identification
-* Severity classification
-* Affected component detection
-* Vehicle condition scoring
-
-### 💰 Repair Cost Estimation
-
-* Estimated repair cost range
-* Severity-based recommendations
-* Maintenance suggestions
-* Repair priority guidance
-
-### 📄 PDF Report Generation
-
-* Professional inspection reports
-* Export reports as PDF
-* Share reports through mobile device
-
-### 📊 Inspection History
-
-* Save reports locally
-* Search reports
-* Filter reports
-* Delete reports
-* View previous inspections
-
-### 📈 Dashboard Analytics
-
-* Total inspections
-* Damage distribution
-* Average vehicle health score
-* Inspection statistics
-
----
-
-## 🏗 System Architecture
-
-User
-↓
-React Native Mobile Application
-↓
-Groq AI Vision API
-↓
-Damage Analysis Engine
-↓
-Result Processing
-↓
-AsyncStorage (Local Storage)
-↓
-PDF Report Generation
-
----
-
-## 🛠 Technologies Used
-
-| Technology         | Purpose                 |
-| ------------------ | ----------------------- |
-| React Native       | Mobile App Development  |
-| Expo SDK           | Development Framework   |
-| TypeScript         | Programming Language    |
-| Expo Router        | Navigation              |
-| Groq AI Vision API | Vehicle Damage Analysis |
-| AsyncStorage       | Local Data Storage      |
-| Expo Print         | PDF Generation          |
-| Expo Sharing       | PDF Sharing             |
-| Visual Studio Code | Development Environment |
-
----
-
-## 📱 Application Modules
-
-### 1. Home Dashboard
-
-Provides system overview and quick access to inspection functionality.
-
-### 2. Vehicle Inspection
-
-Collects vehicle information and image data for analysis.
-
-### 3. AI Analysis Engine
-
-Processes uploaded images and generates inspection results.
-
-### 4. Damage Assessment Report
-
-Displays:
-
-* Damage severity
-* Condition scores
-* Damage findings
-* Repair recommendations
-* Repair cost estimation
-
-### 5. Report Management
-
-Stores inspection reports locally and allows users to manage historical records.
-
-### 6. Profile & Statistics
-
-Displays application information and inspection analytics.
-
----
-
-## 📂 Project Structure
-
-AutoScanAI/
-│
-├── app/
-│ ├── (tabs)/
-│ ├── dashboard/
-│ ├── inspect/
-│ ├── reports/
-│ ├── profile/
-│ └── result/
-│
-├── components/
-│
-├── services/
-│ ├── groqService.ts
-│ └── pdfService.ts
-│
-├── storage/
-│ └── AsyncStorageManager.ts
-│
-├── assets/
-│ ├── images/
-│ └── icons/
-│
-├── constants/
-│
-├── hooks/
-│
-├── utils/
-│
-└── package.json
-
----
-
-## 🚀 Installation
-
-### Clone Repository
-
-git clone https://github.com/yourusername/AutoScanAI.git
-
+```bash
+git clone https://github.com/zasclan/AutoScanAI.git
 cd AutoScanAI
-
-### Install Dependencies
-
 npm install
+```
 
-### Start Application
+Copy the environment template and add your own development key:
 
+```bash
+copy .env.example .env
+```
+
+```env
+EXPO_PUBLIC_GROQ_API_KEY=your_development_key
+```
+
+Start the application:
+
+```bash
 npx expo start
+```
 
-### Run on Android
+Never commit a real API key. An `EXPO_PUBLIC_` value is included in the client bundle, so a production deployment should call the AI service through a secured backend instead.
 
-npx expo run:android
+## Project structure
 
----
+```text
+app/          Screens and Expo Router navigation
+components/   Reusable interface components
+config/       Environment-backed application configuration
+services/     AI analysis and PDF services
+assets/       Application images and icons
+constants/    Shared theme values
+hooks/        Reusable React hooks
+```
 
-## 🔑 Environment Configuration
+## Current limitations
 
-Create a .env file in the project root:
+- Analysis is limited to visible external damage in the submitted image.
+- Results depend on image quality, lighting, and viewpoint.
+- Repair costs are approximate and location-dependent.
+- Inspection history is stored locally on the device.
+- The current prototype requires an internet connection for AI analysis.
 
-EXPO_PUBLIC_GROQ_API_KEY=YOUR_GROQ_API_KEY
+## Planned improvements
 
-Replace YOUR_GROQ_API_KEY with your actual Groq API key.
+- Multi-image inspections
+- User authentication and cloud synchronization
+- Workshop and repair-service recommendations
+- VIN capture
+- Automated tests for response parsing and report generation
+- Secured backend proxy for production API access
 
----
+## Author
 
-## 📸 Screenshots
+Muhammad Arbab Ahmed<br>
+BS Computer Science, University of Agriculture Faisalabad
 
-### Home Dashboard
+## License
 
-Displays inspection statistics and quick access to analysis features.
-
-### Vehicle Inspection
-
-Allows vehicle information entry and image upload.
-
-### AI Analysis Results
-
-Shows detected damage, severity score, and vehicle condition assessment.
-
-### Repair Cost Estimation
-
-Provides estimated repair costs and repair recommendations.
-
-### Report Management
-
-Displays saved inspection reports and report history.
-
----
-
-## 🧪 Testing
-
-The application was tested for:
-
-✔ Vehicle Information Entry
-
-✔ Image Upload
-
-✔ AI Damage Analysis
-
-✔ Severity Classification
-
-✔ Repair Cost Estimation
-
-✔ Report Generation
-
-✔ PDF Export
-
-✔ Report Management
-
-✔ User Interface Responsiveness
-
-✔ Local Data Storage
-
----
-
-## 🎯 Objectives Achieved
-
-* Automated vehicle damage assessment
-* AI-powered image analysis
-* Repair cost estimation
-* PDF report generation
-* Inspection history management
-* Mobile-first user experience
-* Local report storage
-* Professional reporting system
-
----
-
-## 🔒 Limitations
-
-* Requires internet connection for AI analysis
-* Limited to visible external vehicle damage
-* Does not perform internal mechanical diagnostics
-* Repair costs are approximate estimates
-* Analysis accuracy depends on image quality
-
----
-
-## 🚀 Future Enhancements
-
-* Multi-image inspection support
-* Cloud database integration
-* User authentication
-* Workshop recommendation system
-* Insurance claim integration
-* Vehicle VIN scanning
-* Real-time damage comparison
-* Advanced analytics dashboard
-* Multi-language support
-* AI model fine-tuning
-
----
-
-
-
----
-
-## 📄 License
-
-This project was developed for academic and educational purposes as a Final Year Project.
-
-© Muhammad Arbab Ahmed
+Created as an academic final-year project. No open-source licence has been granted yet.

@@ -1,134 +1,87 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { GROQ_API_KEY } from '../config/groq';
+import { extractJsonObject, InspectionResult, normalizeInspection } from '../domain/inspection';
 
-export const analyzeVehicleImageWithGroq = async (imageUri: string) => {
-  const base64Image = await FileSystem.readAsStringAsync(imageUri, {
-    encoding: 'base64',
-  });
+const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const TIMEOUT_MS = 30_000;
 
-  const prompt = `
-You are an expert automotive vehicle inspection engineer.
-
-Analyze the uploaded vehicle image carefully and create a professional damage inspection result.
-
-Return ONLY valid JSON in this exact format:
-
+const prompt = `You are assisting with preliminary, single-image vehicle damage triage.
+Report only observations that are visually supported. Do not diagnose hidden, structural, or mechanical damage.
+Return exactly one JSON object with this contract:
 {
-"isVehicle": true,
-  "vehicleType": "specific vehicle category such as sedan, hatchback, SUV, truck, van, motorcycle, or unknown",
-  "affectedArea": "specific visible area such as front bumper, rear bumper, left fender, right door, hood, roof, side panel, headlight, taillight, or unknown",
-  "damageType": "specific damage type such as scratch, dent, crack, broken light, paint damage, bumper damage, panel damage, or no visible major damage",
-  "affectedComponents": ["component 1", "component 2"],
-  "severity": "Minor, Moderate, or Severe",
-  "damage": ["detailed damage finding 1", "detailed damage finding 2", "detailed damage finding 3"],
-  "estimatedCost": "PKR amount range",
-  "repairSuggestion": "professional repair recommendation with practical repair steps",
-  "bodyCondition": 75,
-  "paintCondition": 80,
-  "safetyImpact": 90,
-  "repairUrgency": "Low, Medium, or High",
-  "resaleImpact": "Low, Medium, or High",
-  "overallScore": 82
+  "isVehicle": true,
+  "vehicleType": "sedan | hatchback | SUV | truck | van | motorcycle | unknown",
+  "affectedArea": "specific visible area",
+  "damageType": "scratch | dent | crack | broken light | paint damage | panel damage | no visible damage | uncertain",
+  "affectedComponents": ["visible component"],
+  "severity": "Minor | Moderate | Severe",
+  "damage": ["concise visible finding"],
+  "estimatedCost": "broad PKR range with uncertainty",
+  "repairSuggestion": "inspection-first recommendation",
+  "bodyCondition": 0,
+  "paintCondition": 0,
+  "safetyImpact": 0,
+  "repairUrgency": "Low | Medium | High",
+  "resaleImpact": "Low | Medium | High",
+  "confidence": 0.0,
+  "evidence": [{"observation":"visual cue","location":"image location","confidence":0.0}],
+  "uncertaintyFlags": ["what cannot be concluded from this image"]
+}
+Rules:
+- confidence values are between 0 and 1.
+- condition scores are between 0 and 100; higher is better.
+- set isVehicle=false for non-vehicle images. Keep the remaining fields structurally valid.
+- include at least one localized evidence item for a vehicle assessment.
+- if damage is unclear, use damageType="uncertain", lower confidence and request another view.
+- cost is a preliminary range, not a quotation.
+- JSON only; no markdown or prose outside the object.`;
+
+async function requestAssessment(base64Image: string, attempt: number): Promise<{ text: string; latencyMs: number }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'user', content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
+        ] }],
+        temperature: 0,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      const message = payload?.error?.message || `Assessment service returned HTTP ${response.status}.`;
+      if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        return requestAssessment(base64Image, 1);
+      }
+      throw new Error(message);
+    }
+    const text = payload?.choices?.[0]?.message?.content;
+    if (typeof text !== 'string' || !text.trim()) throw new Error('Assessment service returned an empty response.');
+    return { text, latencyMs: Date.now() - startedAt };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') throw new Error('Assessment timed out. Try a smaller or clearer image.');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-Rules:
-First determine whether the uploaded image contains a vehicle.
-
-A vehicle includes:
-- Car
-- Sedan
-- SUV
-- Truck
-- Van
-- Motorcycle
-
-If no vehicle is visible:
-
-"isVehicle": false
-
-and set remaining fields to best effort values.
-
-If a vehicle is visible:
-
-"isVehicle": true
-- Be specific and inspection-style, not generic.
-- Identify the most likely affected vehicle area from the image.
-- Mention affected components such as bumper cover, paint layer, fender, door panel, light assembly, hood, grille, or side panel.
-- If damage is not clearly visible, still return a careful inspection result and say "No major visible damage detected" in damage array.
-- Estimate repair cost in Pakistani Rupees based on visible damage severity.
-- bodyCondition, paintCondition, safetyImpact, and overallScore must be numbers from 0 to 100.
-- Lower score means worse condition.
-- safetyImpact should be high if the visible damage does not affect driving safety.
-- Do not include markdown.
-- Do not include explanation outside JSON.
-- Return JSON only.
-`;
-
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 1200,
-    }),
-  });
-
-  const data = await response.json();
-
-  console.log('GROQ RAW RESPONSE:', JSON.stringify(data, null, 2));
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'Groq API request failed');
-  }
-
-  const text = data.choices?.[0]?.message?.content;
-
-  if (!text) {
-    throw new Error('No response from Groq AI');
-  }
-
-  const cleanedText = text
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .trim();
-
-  const parsed = JSON.parse(cleanedText);
-
-  return {
-    isVehicle: parsed.isVehicle ?? true,
-    vehicleType: parsed.vehicleType || 'Passenger Vehicle',
-    affectedArea: parsed.affectedArea || 'Unknown Area',
-    damageType: parsed.damageType || 'Surface Damage',
-    affectedComponents: parsed.affectedComponents || [],
-    severity: parsed.severity || 'Moderate',
-    damage: parsed.damage || ['Visible body damage detected'],
-    estimatedCost: parsed.estimatedCost || 'PKR 18,000 - 25,000',
-    repairSuggestion:
-      parsed.repairSuggestion ||
-      'Recommended repair includes workshop inspection, dent correction, repainting, and polishing where required.',
-    bodyCondition: parsed.bodyCondition || 80,
-    paintCondition: parsed.paintCondition || 75,
-    safetyImpact: parsed.safetyImpact || 90,
-    repairUrgency: parsed.repairUrgency || 'Medium',
-    resaleImpact: parsed.resaleImpact || 'Low',
-    overallScore: parsed.overallScore || 82,
-  };
-};
+export async function analyzeVehicleImageWithGroq(imageUri: string): Promise<InspectionResult> {
+  if (!GROQ_API_KEY) throw new Error('Groq API key is not configured. See .env.example.');
+  if (!imageUri) throw new Error('Select an image before starting an assessment.');
+  const base64Image = await FileSystem.readAsStringAsync(imageUri, { encoding: 'base64' });
+  if (!base64Image) throw new Error('The selected image could not be read.');
+  const response = await requestAssessment(base64Image, 0);
+  return normalizeInspection(extractJsonObject(response.text), { model: MODEL, latencyMs: response.latencyMs });
+}

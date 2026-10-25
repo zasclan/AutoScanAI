@@ -58,7 +58,7 @@ export default function SplashScreen() {
       Animated.timing(barWidth,    { toValue: width * 0.55, duration: 900, useNativeDriver: false }),
       Animated.delay(500),
     ]).start(() => router.replace('/onboarding'));
-  }, []);
+  }, [barWidth, logoOpacity, logoScale, ringOpacity1, ringOpacity2, ringScale1, ringScale2, tagOpacity, textOpacity]);
 
   return (
     <LinearGradient colors={['#020617', '#0f172a', '#1e3a8a']} style={styles.container}>

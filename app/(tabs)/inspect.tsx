@@ -90,44 +90,17 @@ safetyImpact: aiResult.safetyImpact,
 repairUrgency: aiResult.repairUrgency,
 resaleImpact: aiResult.resaleImpact,
 overallScore: aiResult.overallScore,
+          confidence: aiResult.confidence,
+          evidence: JSON.stringify(aiResult.evidence),
+          uncertaintyFlags: JSON.stringify(aiResult.uncertaintyFlags),
+          assessmentVersion: aiResult.assessmentVersion,
+          assessmentModel: aiResult.model,
+          latencyMs: aiResult.latencyMs,
         },
       });
-    } catch (error: any) {
-      console.log('FULL ERROR:', error);
-
-      router.push({
-        pathname: '/result',
-        params: {
-          imageUri: selectedImage,
-          vehicleMake,
-          vehicleModel,
-          vehicleYear,
-          vehicleMileage,
-          vehicleCity,
-          vehicleType: 'Sedan / Passenger Car',
-          severity: 'Moderate',
-          damage: JSON.stringify([
-            'Front bumper scratch',
-            'Minor dent on side panel',
-            'Paint surface damage',
-          ]),
-          estimatedCost: 'PKR 18,000 - 25,000',
-          repairSuggestion:
-            'Recommended repair includes dent removal, bumper repainting and paint polishing. A professional workshop inspection is advised before final repair.',
-            bodyCondition: 80,
-paintCondition: 75,
-safetyImpact: 90,
-repairUrgency: 'Medium',
-resaleImpact: 'Low',
-overallScore: 82,
-affectedArea: 'Front Bumper',
-damageType: 'Paint Scratch',
-affectedComponents: JSON.stringify([
-  'Front Bumper Cover',
-  'Paint Layer'
-]),
-        },
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'The assessment could not be completed.';
+      alert(`${message}\n\nNo report was created. Try a clearer image or retry when the service is available.`);
     } finally {
       setIsAnalyzing(false);
     }

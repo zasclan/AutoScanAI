@@ -24,7 +24,7 @@ const SLIDES = [
     gradient: ['#020617', '#0f172a', '#1e3a8a'] as const,
     title: 'Welcome to\nAutoScan AI',
     subtitle: 'Pakistan\'s first AI-powered vehicle damage assessment app. Instant analysis, real cost estimates.',
-    badge: '🇵🇰 Made for Pakistan',
+    badge: 'ðŸ‡µðŸ‡° Made for Pakistan',
   },
   {
     id: '2',
@@ -33,8 +33,8 @@ const SLIDES = [
     iconBg: 'rgba(16,185,129,0.15)',
     gradient: ['#022c22', '#064e3b', '#065f46'] as const,
     title: 'Snap &\nAnalyse',
-    subtitle: 'Take or upload a photo of any vehicle damage. Our AI detects dents, scratches, bumper damage and more in seconds.',
-    badge: '⚡ Powered by Groq AI',
+    subtitle: 'Take or upload a photo of any vehicle damage. The assessment identifies visible cues and records the evidence behind each preliminary finding.',
+    badge: 'âš¡ Powered by Groq AI',
   },
   {
     id: '3',
@@ -43,8 +43,8 @@ const SLIDES = [
     iconBg: 'rgba(245,158,11,0.15)',
     gradient: ['#1c1004', '#292524', '#44270a'] as const,
     title: 'Full Damage\nReport',
-    subtitle: 'Get severity rating, body & paint condition scores, repair urgency, resale impact and a full PDF report.',
-    badge: '📊 10+ data points per scan',
+    subtitle: 'Review structured findings, confidence, uncertainty flags and a shareable preliminary report.',
+    badge: 'ðŸ“Š 10+ data points per scan',
   },
   {
     id: '4',
@@ -53,8 +53,8 @@ const SLIDES = [
     iconBg: 'rgba(124,58,237,0.15)',
     gradient: ['#13001f', '#1e1b4b', '#2e1065'] as const,
     title: 'Local Cost\nEstimates',
-    subtitle: 'Get repair cost ranges in PKR for your city — Lahore, Karachi, Islamabad, Gujranwala and more.',
-    badge: '💰 PKR estimates by city',
+    subtitle: 'Use broad PKR planning ranges while keeping workshop inspection and local pricing uncertainty explicit.',
+    badge: 'ðŸ’° PKR estimates by city',
   },
   {
     id: '5',
@@ -64,7 +64,7 @@ const SLIDES = [
     gradient: ['#1f0707', '#1c0a0a', '#450a0a'] as const,
     title: 'Save &\nShare Reports',
     subtitle: 'Save inspection history, generate shareable PDFs and track all your vehicle scans in one place.',
-    badge: '📂 Unlimited history',
+    badge: 'ðŸ“‚ Unlimited history',
   },
 ];
 

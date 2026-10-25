@@ -19,6 +19,16 @@ import {
 const SEV_COLOR: Record<string, string> = { Minor: '#16a34a', Moderate: '#d97706', Severe: '#dc2626' };
 const URG_COLOR: Record<string, string> = { Low: '#16a34a', Medium: '#d97706', High: '#dc2626' };
 
+function parseArray<T>(value: string | undefined, fallback: T[]): T[] {
+  if (!value || value === 'undefined') return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <View style={sb.row}>
@@ -46,7 +56,8 @@ export default function ResultScreen() {
     vehicleCity, vehicleType, severity, damage, estimatedCost,
     repairSuggestion, bodyCondition, paintCondition, safetyImpact,
     repairUrgency, resaleImpact, overallScore, affectedArea,
-    damageType, affectedComponents,
+    damageType, affectedComponents, confidence, evidence, uncertaintyFlags,
+    assessmentVersion, assessmentModel, latencyMs,
   } = useLocalSearchParams<Record<string, string>>();
 
   const make     = vehicleMake   || 'N/A';
@@ -66,10 +77,11 @@ export default function ResultScreen() {
   const score    = parseInt(overallScore   || '82');
   const area     = affectedArea   || 'Body Panel';
   const dtype    = damageType     || 'Surface Damage';
-  const components: string[] = (affectedComponents && affectedComponents !== 'undefined')
-    ? JSON.parse(affectedComponents) : ['Body Panel'];
-  const damageList: string[] = (damage && damage !== 'undefined')
-    ? JSON.parse(damage) : ['Visible body damage detected'];
+  const components = parseArray<string>(affectedComponents, ['Body Panel']);
+  const damageList = parseArray<string>(damage, ['Visible body damage detected']);
+  const evidenceList = parseArray<{ observation: string; location: string; confidence: number }>(evidence, []);
+  const flags = parseArray<string>(uncertaintyFlags, []);
+  const assessmentConfidence = Math.round(Number(confidence || 0) * 100);
 
   const vehicleName = `${make} ${model} ${year}`.replace(/N\/A /g, '').trim();
   const sevColor  = SEV_COLOR[sev]     || '#d97706';
@@ -89,6 +101,8 @@ export default function ResultScreen() {
       severity: sev, damage: damageList, cost, repairSuggestion: suggestion,
       bodyCondition, paintCondition, safetyImpact, repairUrgency: urgency,
       resaleImpact: resale, overallScore: String(score),
+      confidence: String(confidence || 0), evidence: evidenceList,
+      uncertaintyFlags: flags, assessmentVersion, assessmentModel, latencyMs,
       date: new Date().toLocaleDateString('en-PK'),
     };
     const old = await AsyncStorage.getItem('inspectionReports');
@@ -232,6 +246,31 @@ export default function ResultScreen() {
             </View>
           </View>
         </LinearGradient>
+
+        <View style={styles.card}>
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <Ionicons name="shield-checkmark-outline" size={15} color="#2563eb" />
+            </View>
+            <Text style={styles.infoLabel}>Assessment confidence</Text>
+            <Text style={styles.infoVal}>{assessmentConfidence}%</Text>
+          </View>
+          <Text style={styles.cardTitle}>Visual evidence</Text>
+          {evidenceList.map((item, index) => (
+            <View key={`${item.location}-${index}`} style={{ marginBottom: 10 }}>
+              <Text style={{ color: '#0f172a', fontWeight: '800' }}>{item.observation}</Text>
+              <Text style={{ color: '#64748b', fontSize: 12 }}>
+                {item.location} • {Math.round(item.confidence * 100)}% confidence
+              </Text>
+            </View>
+          ))}
+          {flags.map((flag) => (
+            <Text key={flag} style={{ color: '#b45309', fontSize: 12, marginTop: 4 }}>⚠ {flag}</Text>
+          ))}
+          <Text style={{ color: '#94a3b8', fontSize: 10, marginTop: 10 }}>
+            Assessment v{assessmentVersion || '2.0'} • {assessmentModel || 'vision model'} • {latencyMs || 'N/A'} ms
+          </Text>
+        </View>
 
         {/* Score bars */}
         <View style={styles.card}>

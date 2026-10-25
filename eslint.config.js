@@ -6,5 +6,9 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    rules: {
+      // React Native's package exports are resolved by Metro, not eslint's Node resolver.
+      'import/no-unresolved': ['error', { ignore: ['^react-native$'] }],
+    },
   },
 ]);

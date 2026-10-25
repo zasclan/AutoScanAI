@@ -1,121 +1,90 @@
 # AutoScan AI
 
-Mobile vehicle-damage assessment prototype built with React Native, Expo, and TypeScript.
+**Evidence-aware vehicle damage triage for mobile devices**
 
-AutoScan AI lets a user capture or select a vehicle image, submit it to the Groq Vision API, review a structured damage assessment, save the result locally, and export a shareable PDF report. It was developed as a BS Computer Science final-year project at the University of Agriculture Faisalabad.
+AutoScan AI is a final-year research prototype that studies how a vision-language model can support preliminary vehicle-damage triage from a single photograph. The application does more than forward an image to an API: it enforces a versioned assessment contract, validates every response, derives condition scores locally, records evidence and uncertainty, and rejects invalid output instead of fabricating a report.
 
-> AutoScan AI provides a preliminary visual assessment. It does not replace an inspection by a qualified mechanic, body-repair specialist, or insurance assessor.
+> The output is decision support, not a mechanical, structural or safety diagnosis. Low-confidence and safety-related findings require professional inspection.
 
-## Core features
+## Problem statement
 
-- Camera and gallery image input
-- Vehicle information capture
-- AI-assisted identification of visible damage
-- Severity, affected-area, and condition summaries
-- Approximate repair-cost guidance
-- Local inspection history with search and filtering
-- PDF report generation and native sharing
-- Dashboard statistics for saved inspections
+Vision-language APIs can produce fluent but inconsistent descriptions. A useful inspection workflow must answer separate engineering questions:
+
+- Is the response structurally valid?
+- Which visible cue supports each finding?
+- How confident is the assessment, and what cannot be inferred?
+- Are scores reproducible, or generated freely by the model?
+- What happens when the provider times out, rate-limits or returns malformed JSON?
+
+AutoScan addresses those failure modes in the application layer.
+
+## Assessment pipeline
+
+```text
+Camera/gallery image
+        â†“
+Versioned JSON contract + conservative visual prompt
+        â†“
+Groq vision request (timeout + transient retry)
+        â†“
+JSON extraction and strict schema validation
+        â†“
+Evidence/confidence checks + uncertainty flags
+        â†“
+Deterministic weighted condition score
+        â†“
+Reviewable report, local history and PDF export
+```
+
+## Implemented safeguards
+
+- Explicit API-key and image preconditions
+- 30-second timeout and one retry for rate-limit/server failures
+- Strict vehicle decision, enumerated severity/risk levels and bounded scores
+- Localized evidence items with per-finding confidence
+- Low-confidence and weak-evidence manual-review flags
+- Locally derived overall score: body 40%, paint 25%, safety 35%
+- Model, latency and assessment-version provenance
+- Safe JSON-array parsing when opening saved or routed reports
+- No synthetic fallback report when the API or parser fails
+
+## Validation
+
+```bash
+npm install
+npm test
+npx tsc --noEmit
+```
+
+The automated suite verifies JSON extraction, malformed/missing-evidence rejection, confidence warnings and deterministic scoring. It does **not** claim damage-detection accuracy. A labelled human-reviewed image dataset is required before accuracy, F1 or calibration results can be reported.
+
+The complete research questions, proposed dataset design, metrics, threats to validity and safety position are documented in [`docs/RESEARCH.md`](docs/RESEARCH.md).
 
 ## Technology
 
-| Area | Technology |
-|---|---|
-| Mobile application | React Native, Expo |
-| Language | TypeScript |
-| Navigation | Expo Router |
-| AI service | Groq Vision API |
-| Local persistence | AsyncStorage |
-| Reports | Expo Print, Expo Sharing |
+- React Native, Expo Router and TypeScript
+- Groq vision-language API
+- AsyncStorage for local report history
+- Expo Print and Sharing for PDF export
+- Vitest for domain validation tests
 
-## Application flow
+## Configuration
 
-```text
-Vehicle details and image
-          |
-          v
-React Native application
-          |
-          v
-Groq Vision API
-          |
-          v
-Response validation and result processing
-          |
-          +--> Local inspection history
-          |
-          +--> PDF report and sharing
-```
-
-## Run locally
-
-### Requirements
-
-- Node.js 20 or newer
-- npm
-- Expo Go or an Android/iOS development environment
-- A Groq API key
-
-### Setup
-
-```bash
-git clone https://github.com/zasclan/AutoScanAI.git
-cd AutoScanAI
-npm install
-```
-
-Copy the environment template and add your own development key:
-
-```bash
-copy .env.example .env
-```
+Copy `.env.example` to `.env` and provide the required development key:
 
 ```env
-EXPO_PUBLIC_GROQ_API_KEY=your_development_key
+EXPO_PUBLIC_GROQ_API_KEY=your_key_here
 ```
 
-Start the application:
+Expo public environment variables are bundled into the client. A production deployment should proxy model requests through a controlled backend that authenticates users, protects provider credentials, rate-limits requests and stores audit metadata.
 
-```bash
-npx expo start
-```
+## Known limitations
 
-Never commit a real API key. An `EXPO_PUBLIC_` value is included in the client bundle, so a production deployment should call the AI service through a secured backend instead.
-
-## Project structure
-
-```text
-app/          Screens and Expo Router navigation
-components/   Reusable interface components
-config/       Environment-backed application configuration
-services/     AI analysis and PDF services
-assets/       Application images and icons
-constants/    Shared theme values
-hooks/        Reusable React hooks
-```
-
-## Current limitations
-
-- Analysis is limited to visible external damage in the submitted image.
-- Results depend on image quality, lighting, and viewpoint.
-- Repair costs are approximate and location-dependent.
-- Inspection history is stored locally on the device.
-- The current prototype requires an internet connection for AI analysis.
-
-## Planned improvements
-
-- Multi-image inspections
-- User authentication and cloud synchronization
-- Workshop and repair-service recommendations
-- VIN capture
-- Automated tests for response parsing and report generation
-- Secured backend proxy for production API access
+- Single-view images cannot expose hidden or mechanical damage.
+- Model confidence is not calibrated until evaluated against labelled data.
+- PKR cost ranges are planning guidance, not workshop quotations.
+- Local report storage is device-specific and is not an evidence-preservation system.
 
 ## Author
 
-Muhammad Arbab Ahmed<br>
-BS Computer Science, University of Agriculture Faisalabad
-
-## License
-
-Created as an academic final-year project. No open-source licence has been granted yet.
+Muhammad Arbab Ahmed â€” BS Computer Science final-year project

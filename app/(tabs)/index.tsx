@@ -155,7 +155,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   ))}
                   {filteredCities.length===0 &&
-                    <Text style={t.cityNone}>No city matching "{cityInput}"</Text>}
+                    <Text style={t.cityNone}>{`No city matching "${cityInput}"`}</Text>}
                 </ScrollView>
               </View>
             </TouchableWithoutFeedback>

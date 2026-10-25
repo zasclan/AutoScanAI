@@ -1,5 +1,7 @@
 # AutoScan AI
 
+[![Verify](https://github.com/zasclan/AutoScanAI/actions/workflows/ci.yml/badge.svg)](https://github.com/zasclan/AutoScanAI/actions/workflows/ci.yml)
+
 **Evidence-aware vehicle damage triage for mobile devices**
 
 AutoScan AI is a final-year research prototype that studies how a vision-language model can support preliminary vehicle-damage triage from a single photograph. The application does more than forward an image to an API: it enforces a versioned assessment contract, validates every response, derives condition scores locally, records evidence and uncertainty, and rejects invalid output instead of fabricating a report.

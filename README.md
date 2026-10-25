@@ -56,7 +56,9 @@ npm test
 npx tsc --noEmit
 ```
 
-The automated suite verifies JSON extraction, malformed/missing-evidence rejection, confidence warnings and deterministic scoring. It does **not** claim damage-detection accuracy. A labelled human-reviewed image dataset is required before accuracy, F1 or calibration results can be reported.
+The automated suite verifies JSON extraction, malformed/missing-evidence rejection, confidence warnings and deterministic scoring. The executable [`research/evaluation.ts`](research/evaluation.ts) module measures coverage, vehicle accuracy, damage/severity agreement and confidence Brier score against labelled cases. Its tests use synthetic records to validate the metric calculations; they are not model-accuracy results.
+
+AutoScan does **not** claim damage-detection accuracy. A labelled human-reviewed image dataset is required before accuracy, F1 or calibration results can be reported.
 
 The complete research questions, proposed dataset design, metrics, threats to validity and safety position are documented in [`docs/RESEARCH.md`](docs/RESEARCH.md).
 
